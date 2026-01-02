@@ -20,13 +20,14 @@ function Login({ onLogin }) {
 
     try {
       const endpoint = isRegister ? '/api/register' : '/api/login';
-      const response = await fetch(`http://localhost:8000${endpoint}`, {
+      const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const response = await fetch(`${BACKEND_URL}${endpoint}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+            'Content-Type': 'application/json',
         },
         body: JSON.stringify({ username, password }),
-      });
+    });
 
       const data = await response.json();
 
