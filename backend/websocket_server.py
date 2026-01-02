@@ -15,15 +15,21 @@ db = Database()
 level_generator = LevelGenerator(grid_size=15)
 
 # CORS - Configuration pour développement et production
+# CORS - Configuration sécurisée
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+
+allowed_origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
+
+# Ajouter l'URL de production si elle existe
+if FRONTEND_URL and FRONTEND_URL not in allowed_origins:
+    allowed_origins.append(FRONTEND_URL)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173", 
-        "http://localhost:3000",
-        FRONTEND_URL,  # URL de production depuis variable d'environnement
-        "https://*.onrender.com"  # Tous les sous-domaines Render
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
