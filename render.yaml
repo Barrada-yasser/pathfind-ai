@@ -1,0 +1,36 @@
+services:
+  # Backend Python avec WebSocket
+  - type: web
+    name: pathfind-backend
+    env: python
+    region: frankfurt
+    plan: free
+    buildCommand: "cd backend && pip install -r requirements.txt"
+    startCommand: "cd backend && python websocket_server.py"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: PORT
+        sync: false
+      - key: MONGO_URI
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+    
+  # Frontend React Vite
+  - type: web
+    name: pathfind-frontend
+    env: static
+    region: frankfurt
+    plan: free
+    buildCommand: "cd frontend && npm install && npm run build"
+    staticPublishPath: frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: "18"
+      - key: VITE_BACKEND_URL
+        sync: false

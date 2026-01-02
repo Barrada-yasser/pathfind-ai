@@ -1,0 +1,32 @@
+.env
+*.env
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.db
+venv/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+.vite/
+*.log
+
+# Base de données
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
