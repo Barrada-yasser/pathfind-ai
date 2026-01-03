@@ -1,5 +1,23 @@
 import React, { useEffect, useRef, useState } from 'react';
 
+// Configuration des URLs selon l'environnement
+const getBackendUrl = () => {
+  if (window.location.hostname === 'localhost') {
+    return 'http://localhost:8000';
+  }
+  return 'https://pathfind-ai-4.onrender.com';
+};
+
+const getWebSocketUrl = () => {
+  if (window.location.hostname === 'localhost') {
+    return 'ws://localhost:8000/ws/game';
+  }
+  return 'wss://pathfind-ai-4.onrender.com/ws/game';
+};
+
+const BACKEND_URL = getBackendUrl();
+const WS_URL = getWebSocketUrl();
+
 // Composant Leaderboard intégré
 function Leaderboard({ onClose }) {
   const [leaderboard, setLeaderboard] = useState([]);
@@ -12,7 +30,7 @@ function Leaderboard({ onClose }) {
 
   const fetchLeaderboard = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/leaderboard');
+      const response = await fetch(`${BACKEND_URL}/api/leaderboard`);
       const data = await response.json();
       
       if (response.ok) {
@@ -178,7 +196,8 @@ function GameCanvas({ user, onLogout }) {
   useEffect(() => {
     if (!user) return;
 
-    const ws = new WebSocket('ws://localhost:8000/ws/game');
+    console.log('🔌 Connexion WebSocket à:', WS_URL);
+    const ws = new WebSocket(WS_URL);
     wsRef.current = ws;
 
     ws.onopen = () => {
@@ -239,6 +258,10 @@ function GameCanvas({ user, onLogout }) {
       }
     };
 
+    ws.onerror = (error) => {
+      console.error('❌ Erreur WebSocket:', error);
+    };
+
     ws.onclose = () => {
       console.log('❌ Déconnecté');
       setConnected(false);
@@ -289,15 +312,16 @@ function GameCanvas({ user, onLogout }) {
           ctx.drawImage(images.crystal_icy, x * cellSize + 5, y * cellSize + 5, cellSize - 10, cellSize - 10);
         } else if (cell === 6 && images.crystal_red) {
           ctx.drawImage(images.crystal_red, x * cellSize + 5, y * cellSize + 5, cellSize - 10, cellSize - 10);
-        } else if ((cell > 0 && cell < 4) || cell === -2 || cell === -3) {
-          const colors = { 1: '#8b5a3c', 2: '#6b4423', 3: '#a67c52', '-2': '#6b4423', '-3': '#a67c52' };
+        } else if (cell !== 0 && cell > 0 && cell < 4) {
+          // Fallback couleur
+          const colors = { 1: '#8b5a3c', 2: '#6b4423', 3: '#a67c52' };
           ctx.fillStyle = colors[cell] || '#333';
           ctx.fillRect(x * cellSize, y * cellSize, cellSize - 2, cellSize - 2);
         }
       }
     }
 
-    // Dessiner l'objectif
+    // Dessiner l'objectif (porte dorée)
     ctx.fillStyle = '#ffd700';
     ctx.strokeStyle = '#b8860b';
     ctx.lineWidth = 3;
@@ -323,6 +347,17 @@ function GameCanvas({ user, onLogout }) {
         cellSize - 4,
         cellSize - 4
       );
+    } else {
+      ctx.fillStyle = '#ff4757';
+      ctx.beginPath();
+      ctx.arc(
+        gameState.player_pos[0] * cellSize + cellSize / 2,
+        gameState.player_pos[1] * cellSize + cellSize / 2,
+        cellSize / 3,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
     }
 
   }, [gameState, imagesLoaded, images]);
@@ -336,7 +371,6 @@ function GameCanvas({ user, onLogout }) {
 
   // Niveau suivant
   const handleNextLevel = () => {
-    setShowLeaderboard(false);
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ action: 'next_level' }));
     }
@@ -359,7 +393,7 @@ function GameCanvas({ user, onLogout }) {
 
       {gameState && (
         <div style={styles.info}>
-          <span style={styles.timer}>⏱️ {gameState.time_left.toFixed(1)}s</span>
+          <span style={styles.timer}>⏱️ {gameState.time_left?.toFixed(1)}s</span>
           <span>📍 Niveau {gameState.level}</span>
           <span style={styles.icyCounter}>
             💎 Icy: {gameState.collected_icy || 0}/{gameState.total_icy || 0}
